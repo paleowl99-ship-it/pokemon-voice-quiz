@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-title" content="寶可夢猜謎" />
+<meta name="theme-color" content="#0b1120" />
+<title>寶可夢語音猜謎</title>
+<style>
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  :root{--bg:#0b1120;--card:#111827;--card2:#0f172a;--fg:#f8fafc;--muted:#94a3b8;--border:#263148;--accent:#f59e0b;--accent-fg:#1c1303;--ok:#34d399;--okbg:rgba(16,185,129,.18);--bad:#fb7185;--badbg:rgba(244,63,94,.18)}
+  @media (prefers-color-scheme: light){
+    :root{--bg:#f1f5f9;--card:#ffffff;--card2:#f8fafc;--fg:#0f172a;--muted:#64748b;--border:#d5dde8;--accent:#f59e0b;--accent-fg:#1c1303;--ok:#047857;--okbg:rgba(16,185,129,.15);--bad:#be123c;--badbg:rgba(244,63,94,.12)}
+  }
+  html,body{margin:0;padding:0}
+  body{background:var(--bg);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,"PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif;line-height:1.6;-webkit-text-size-adjust:100%;padding:calc(12px + env(safe-area-inset-top)) calc(12px + env(safe-area-inset-right)) calc(96px + env(safe-area-inset-bottom)) calc(12px + env(safe-area-inset-left))}
+  .wrap{max-width:720px;margin:0 auto}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:16px;margin-bottom:12px}
+  h1{font-size:22px;margin:6px 0 4px}
+  .sub{font-size:13px;color:var(--muted);margin:0}
+  .tag{display:inline-block;font-size:12px;font-weight:700;padding:3px 10px;border-radius:99px;background:rgba(245,158,11,.15);color:var(--accent);border:1px solid rgba(245,158,11,.35)}
+  .tabs{display:flex;gap:6px;background:var(--card2);border:1px solid var(--border);border-radius:14px;padding:4px;margin-top:12px}
+  .tab{flex:1;min-height:44px;border:0;border-radius:10px;background:transparent;color:var(--muted);font-size:15px;font-weight:700}
+  .tab.on{background:var(--accent);color:var(--accent-fg)}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+  label.lb{display:block;font-size:12px;font-weight:700;color:var(--muted);margin-bottom:4px}
+  select{width:100%;min-height:46px;font-size:16px;padding:0 10px;border-radius:12px;border:1px solid var(--border);background:var(--card2);color:var(--fg);-webkit-appearance:none;appearance:none}
+  .row{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:12px}
+  .chk{display:flex;align-items:center;gap:8px;font-size:14px;min-height:40px}
+  .chk input{width:22px;height:22px;accent-color:var(--accent)}
+  .seg{display:flex;align-items:center;gap:4px;background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:3px}
+  .seg span{font-size:13px;color:var(--muted);padding:0 6px}
+  .seg button{min-height:38px;padding:0 12px;border:0;border-radius:9px;background:transparent;color:var(--muted);font-size:14px;font-weight:600}
+  .seg button.on{background:var(--accent);color:var(--accent-fg)}
+  .btn{min-height:50px;padding:0 18px;border:0;border-radius:14px;background:var(--accent);color:var(--accent-fg);font-size:16px;font-weight:800}
+  .btn.ghost{background:var(--card2);color:var(--fg);border:1px solid var(--border);font-weight:600}
+  .btn:active{transform:scale(.98)}
+  .btn:disabled{opacity:.4}
+  .full{width:100%}
+  .meta{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}
+  .badge{font-size:13px;font-weight:800;padding:4px 10px;border-radius:8px;background:rgba(245,158,11,.18);color:var(--accent)}
+  .cat{font-size:12px;color:var(--muted);padding:4px 10px;border:1px solid var(--border);border-radius:8px;background:var(--card2)}
+  .score{font-size:15px;font-weight:700}
+  .bar{height:8px;background:var(--card2);border:1px solid var(--border);border-radius:99px;overflow:hidden;margin-bottom:14px}
+  .bar>div{height:100%;background:var(--accent);transition:width .25s}
+  .q{background:var(--card2);border:1px solid var(--border);border-radius:14px;padding:14px;font-size:18px;font-weight:700;line-height:1.7;margin:12px 0}
+  .opts{display:grid;grid-template-columns:1fr;gap:10px}
+  .opt{width:100%;min-height:56px;text-align:left;padding:12px 14px;border-radius:14px;border:1.5px solid var(--border);background:var(--card2);color:var(--fg);font-size:17px;font-weight:700;display:flex;justify-content:space-between;align-items:center}
+  .opt:active:not(:disabled){border-color:var(--accent)}
+  .opt.ok{background:var(--okbg);border-color:var(--ok);color:var(--ok)}
+  .opt.bad{background:var(--badbg);border-color:var(--bad);color:var(--bad)}
+  .opt.dim{opacity:.5}
+  .exp{margin-top:14px;padding:14px;border-radius:14px;border:1px solid rgba(245,158,11,.45);background:rgba(245,158,11,.1)}
+  .exp b{display:block;font-size:16px;margin-bottom:6px}
+  .exp p{margin:0 0 10px;font-size:15px}
+  .hidden{display:none!important}
+  .status{font-size:12px;color:var(--accent);margin-left:auto}
+  textarea{width:100%;min-height:300px;padding:12px;font-size:14px;line-height:1.6;border-radius:12px;border:1px solid var(--border);background:var(--card2);color:var(--fg);font-family:ui-monospace,Menlo,monospace}
+  .toast{padding:10px 14px;border-radius:12px;background:var(--okbg);color:var(--ok);font-weight:700;font-size:14px;margin:10px 0}
+  .nav{position:fixed;left:0;right:0;bottom:0;display:flex;gap:8px;padding:10px calc(12px + env(safe-area-inset-right)) calc(10px + env(safe-area-inset-bottom)) calc(12px + env(safe-area-inset-left));background:var(--card);border-top:1px solid var(--border);z-index:10}
+  .nav .btn{flex:1;padding:0 8px}
+  .nav .btn.mid{flex:.8}
+  .tip{font-size:12px;color:var(--muted);margin-top:10px}
+  @media (min-width:640px){.opts{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <span class="tag">⚡ 熱門寶可夢・隨機抽題・不含御三家</span>
+    <h1>寶可夢語音猜謎</h1>
+    <p class="sub" id="subtitle"></p>
+    <div class="tabs">
+      <button id="tab-quiz" class="tab on" onclick="switchTab('quiz')">🎮 猜謎</button>
+      <button id="tab-copy" class="tab" onclick="switchTab('copy')">📋 複製題庫</button>
+    </div>
+    <div class="grid2">
+      <div>
+        <label class="lb" for="gen-select">世代</label>
+        <select id="gen-select" onchange="generateRandomQuiz()">
+          <option value="0" selected>🌍 全部世代</option>
+          <option value="1">第 1 世代（關都）</option>
+          <option value="2">第 2 世代（城都）</option>
+          <option value="3">第 3 世代（豐緣）</option>
+          <option value="4">第 4 世代（神奧）</option>
+          <option value="5">第 5 世代（合眾）</option>
+          <option value="6">第 6 世代（卡洛斯）</option>
+          <option value="7">第 7 世代（阿羅拉）</option>
+          <option value="8">第 8 世代（伽勒爾）</option>
+          <option value="9">第 9 世代（帕底亞）</option>
+        </select>
+      </div>
+      <div>
+        <label class="lb" for="count-select">題數</label>
+        <select id="count-select" onchange="generateRandomQuiz()">
+          <option value="10">🎲 10 題</option>
+          <option value="20">🎲 20 題</option>
+          <option value="50" selected>🎲 50 題</option>
+          <option value="9999">🎲 全部</option>
+        </select>
+      </div>
+    </div>
+    <div class="row">
+      <label class="chk"><input type="checkbox" id="auto-speak-toggle" checked /> 🔊 自動朗讀</label>
+      <div class="seg">
+        <span>語速</span>
+        <button id="rate-0.85" onclick="setRate(0.85)">慢</button>
+        <button id="rate-1" class="on" onclick="setRate(1)">正常</button>
+        <button id="rate-1.2" onclick="setRate(1.2)">快</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="view-quiz">
+    <div class="card">
+      <div class="meta">
+        <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center">
+          <span class="badge" id="q-badge"></span>
+          <span class="cat" id="q-category"></span>
+        </div>
+        <span class="score">得分 <span id="score-display" style="color:var(--accent)">0</span></span>
+      </div>
+      <div class="bar"><div id="progress-bar" style="width:0%"></div></div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button class="btn" style="flex:1" onclick="speakCurrentQuestion()">🔊 朗讀題目</button>
+        <button class="btn ghost" onclick="stopSpeaking()">⏹️</button>
+      </div>
+      <button class="btn ghost full" style="margin-top:8px" onclick="speakCurrentOptions()">🔊 重念選項</button>
+      <div style="min-height:18px"><span class="status" id="speech-status"></span></div>
+      <div class="q" id="question-text"></div>
+      <div class="opts" id="options-container"></div>
+      <div class="exp hidden" id="explanation-box">
+        <b id="feedback-title"></b>
+        <p id="explanation-text"></p>
+        <button class="btn ghost" onclick="speakExplanation()" style="min-height:44px;font-size:14px">🔊 朗讀解析</button>
+      </div>
+      <p class="tip">📱 iPhone 提示：請先把靜音開關（側邊撥桿）關閉，並調高音量，才聽得到語音。</p>
+    </div>
+  </div>
+
+  <div id="view-copy" class="hidden">
+    <div class="card">
+      <h2 style="margin:0 0 4px;font-size:18px">📋 題庫複製區</h2>
+      <p class="sub">目前隨機抽出的這批題目，可貼到 LINE 考朋友。</p>
+      <div class="row">
+        <button class="btn" style="flex:1" onclick="copyAllQuestions(false)">複製純題目</button>
+        <button class="btn ghost" style="flex:1" onclick="copyAllQuestions(true)">複製＋解答</button>
+      </div>
+      <div class="toast hidden" id="copy-toast">✅ 已複製！</div>
+      <textarea id="copy-textarea" readonly></textarea>
+    </div>
+  </div>
+</div>
+
+<div class="nav" id="nav">
+  <button class="btn ghost" id="prev-btn" onclick="prevQuestion()">⬅️ 上一題</button>
+  <button class="btn ghost mid" onclick="generateRandomQuiz()">🎲 換一批</button>
+  <button class="btn" id="next-btn" onclick="nextQuestion()">下一題 ➡️</button>
+</div>
+
+<script>
+const REGION = { 1:"關都",2:"城都",3:"豐緣",4:"神奧",5:"合眾",6:"卡洛斯",7:"阿羅拉",8:"伽勒爾",9:"帕底亞" };
+
+// 熱門寶可夢題庫（不含御三家）: [名稱, 世代, 屬性, 描述]
+const POKEMON = [
+      // ===== 第 1 世代 =====
+      ["皮卡丘", 1, "電", "臉頰兩側有紅色的電力囊，尾巴形狀像閃電，是小智最忠實的搭檔。"],
+      ["雷丘", 1, "電", "全身橘色，細長的尾巴末端像閃電的形狀，是由皮卡丘接觸雷之石進化而來。"],
+      ["胖丁", 1, "一般・妖精", "粉紅色圓滾滾的身體，拿起麥克風唱歌會讓聽眾全部睡著，生氣時還會在睡著的人臉上塗鴉。"],
+      ["皮皮", 1, "妖精", "粉紅色、耳朵尖尖的可愛寶可夢，傳說會在滿月的夜晚聚集起來跳舞。"],
+      ["六尾", 1, "火", "紅褐色的小狐狸，剛出生時只有一條白色尾巴，長大後會分岔成六條捲捲的尾巴。"],
+      ["九尾", 1, "火", "全身金黃色的優雅狐狸，擁有九條尾巴，傳說能活上一千年。"],
+      ["喵喵", 1, "一般", "額頭上有一枚閃亮的金幣，在動畫中是火箭隊成員，還會說人話。"],
+      ["可達鴨", 1, "水", "總是抱著頭的黃色鴨子，頭痛越嚴重，無意識中使出的念力就越強大。"],
+      ["卡蒂狗", 1, "火", "橘色身體帶黑色條紋的小狗，對訓練家非常忠誠，會勇敢吠叫保護主人。"],
+      ["風速狗", 1, "火", "威風凜凜的火屬性神犬，據說一天一夜就能奔跑一萬公里。"],
+      ["蚊香蝌蚪", 1, "水", "藍色圓圓的蝌蚪，肚子上有一圈黑白相間的漩渦花紋，看久了會讓人想睡覺。"],
+      ["凱西", 1, "超能力", "一天要睡 18 個小時，就算在睡覺中遇到危險，也會用瞬間移動逃走。"],
+      ["胡地", 1, "超能力", "雙手各拿著一支湯匙，據說智商高達 5000，記得出生以來發生的所有事情。"],
+      ["怪力", 1, "格鬥", "擁有四條肌肉發達的手臂，短短兩秒內就能揮出一千拳。"],
+      ["呆呆獸", 1, "水・超能力", "粉紅色、動作慢吞吞，喜歡把尾巴伸進水裡釣魚，反應遲鈍到被咬了也不太覺得痛。"],
+      ["小磁怪", 1, "電・鋼", "只有一顆大眼睛、兩側有 U 型磁鐵，會靠電磁波浮在空中。"],
+      ["大蔥鴨", 1, "一般・飛行", "總是拿著一根大蔥（植物莖），像揮劍一樣用它戰鬥。"],
+      ["鬼斯", 1, "幽靈・毒", "身體幾乎是氣體做成的紫黑色圓球，周圍包著一層毒氣，風一吹就會變小。"],
+      ["耿鬼", 1, "幽靈・毒", "紫黑色圓胖身體、紅眼睛加上壞笑，躲在影子裡惡作劇，牠靠近時周圍溫度會下降。"],
+      ["大岩蛇", 1, "岩石・地面", "由一顆顆巨大岩石連成的長蛇，能在地底高速鑽洞，是小剛的招牌搭檔。"],
+      ["霹靂電球", 1, "電", "外型跟紅白精靈球一模一樣，常被誤認為道具，一碰就可能爆炸。"],
+      ["椰蛋樹", 1, "草・超能力", "外型像一棵會走路的椰子樹，頭頂上長著好幾顆有各自表情的椰子頭。"],
+      ["卡拉卡拉", 1, "地面", "頭上戴著過世媽媽的頭骨，手裡拿著骨頭當武器，寂寞時會對著月亮哭泣。"],
+      ["飛腿郎", 1, "格鬥", "沒有頭部，雙腿可以像彈簧一樣伸長，使出強力的飛踢。"],
+      ["快拳郎", 1, "格鬥", "雙手像戴著拳擊手套，出拳速度快到肉眼看不清，像一位拳擊冠軍。"],
+      ["大舌頭", 1, "一般", "粉紅色身體，擁有長達兩公尺的超長舌頭，什麼東西都想舔舔看。"],
+      ["吉利蛋", 1, "一般", "粉紅色圓滾滾的身體，肚子口袋裡裝著一顆營養滿分的蛋，常在寶可夢中心幫忙。"],
+      ["袋獸", 1, "一般", "肚子上有育兒袋，裡面帶著自己的小寶寶，為了保護孩子會變得非常強悍。"],
+      ["魔牆人偶", 1, "超能力・妖精", "擅長表演默劇，只要比手畫腳就能製造出真正擋住攻擊的透明牆壁。"],
+      ["飛天螳螂", 1, "蟲・飛行", "全身翠綠色，雙手是兩把鋒利的鐮刀，動作快到像殘影一樣。"],
+      ["迷唇姐", 1, "冰・超能力", "金色長髮、豐厚的嘴唇，走路時會像跳舞一樣扭動身體。"],
+      ["電擊獸", 1, "電", "黃色身體帶黑色條紋，經常出現在發電廠吃電，造成大停電。"],
+      ["鴨嘴火獸", 1, "火", "嘴巴像鴨嘴，全身包覆著火焰，常住在火山口附近。"],
+      ["凱羅斯", 1, "蟲", "頭上長著兩支巨大的鉗子，能夾住敵人用力甩出去。"],
+      ["肯泰羅", 1, "一般", "脾氣暴躁的公牛，擁有三條尾巴，會一邊甩尾巴一邊衝撞。"],
+      ["鯉魚王", 1, "水", "全身紅色、只會一直「躍起」的魚，號稱最弱的寶可夢，但進化後會變得超兇猛。"],
+      ["暴鯉龍", 1, "水・飛行", "由最弱的鯉魚王進化而成，外型像巨大的藍色東方龍，脾氣非常暴躁。"],
+      ["拉普拉斯", 1, "水・冰", "背上有甲殼的溫柔蛇頸龍，很聰明，喜歡載著人在海上游泳。"],
+      ["百變怪", 1, "一般", "紫色果凍般的軟泥，可以變身成任何寶可夢的模樣。"],
+      ["伊布", 1, "一般", "脖子有一圈蓬鬆絨毛的棕色小狗，可以進化成 8 種不同屬性的型態。"],
+      ["水伊布", 1, "水", "伊布接觸水之石進化而成，身體能融進水中，尾巴像魚鰭一樣。"],
+      ["雷伊布", 1, "電", "伊布接觸雷之石進化而成，全身的毛像針一樣刺刺的，會放出電擊。"],
+      ["火伊布", 1, "火", "伊布接觸火之石進化而成，有著蓬鬆的橘色毛和奶油色頸毛，體溫非常高。"],
+      ["多邊獸", 1, "一般", "由人類用電腦程式製造出來的人工寶可夢，可以進入網路空間。"],
+      ["卡比獸", 1, "一般", "每天要吃 400 公斤食物，吃飽就睡在路中間擋路，要吹笛子才叫得醒。"],
+      ["急凍鳥", 1, "冰・飛行", "關都三神鳥之一，擁有藍色長尾羽，飛過的地方會降下雪。"],
+      ["閃電鳥", 1, "電・飛行", "關都三神鳥之一，全身黃色、羽毛像閃電般尖銳，振翅時會發出雷聲。"],
+      ["火焰鳥", 1, "火・飛行", "關都三神鳥之一，翅膀燃燒著美麗的火焰，據說出現時代表春天到來。"],
+      ["迷你龍", 1, "龍", "藍色細長、像小蛇一樣的龍，過去因為很少見，一度被認為是幻之寶可夢。"],
+      ["快龍", 1, "龍・飛行", "橘黃色圓肚子、背上有小翅膀，性格善良，會在海上救助遇難的人。"],
+      ["超夢", 1, "超能力", "科學家用夢幻的基因改造而成的人工寶可夢，擁有強大又冷酷的超能力。"],
+      ["夢幻", 1, "超能力", "粉紅色的小貓模樣，據說擁有所有寶可夢的基因，能學會所有的招式。"],
+      ["臭泥", 1, "毒", "全身是紫色黏糊糊的爛泥，走過的地方會留下臭味，連草都長不出來。"],
+      ["穿山鼠", 1, "地面", "黃色皮膚很乾燥，遇到危險會把身體蜷縮成一顆球保護自己。"],
+      ["巴大蝶", 1, "蟲・飛行", "紫色身體、白色大翅膀的蝴蝶，翅膀上的鱗粉有毒，小智曾經含淚放生牠。"],
+      ["大針蜂", 1, "蟲・毒", "雙手和尾巴都有又粗又長的毒針，會成群結隊攻擊入侵者。"],
+      ["波波", 1, "一般・飛行", "在森林和草叢中最常見的小鳥，個性溫和，會拍動翅膀捲起沙子。"],
+      ["小拉達", 1, "一般", "紫色的小老鼠，有一對會不斷長長的大門牙，什麼都能啃。"],
+      ["阿柏蛇", 1, "毒", "紫色的蛇，牠的日文與英文名字倒過來唸就是「蛇」，是火箭隊武藏的寶可夢。"],
+      ["走路草", 1, "草・毒", "藍色圓圓的身體、頭上長著葉子，白天埋在土裡，晚上才出來走路。"],
+      ["派拉斯", 1, "蟲・草", "背上長著兩顆紅色蘑菇的蟲，蘑菇會吸取牠身上的養分長大。"],
+      ["地鼠", 1, "地面", "永遠只從土裡露出棕色的頭和粉紅大鼻子，沒有人看過牠藏在地下的身體。"],
+      ["小拳石", 1, "岩石・地面", "看起來像一顆長了兩隻手的圓石頭，常被登山客不小心踩到。"],
+      ["小火馬", 1, "火", "鬃毛和尾巴都是燃燒的火焰，出生一小時就能站起來奔跑。"],
+      ["瓦斯彈", 1, "毒", "圓圓的紫色身體裡裝滿毒氣，身上有骷髏圖案，是小次郎的搭檔。"],
+      ["角金魚", 1, "水", "頭上有一根角的白紅色金魚，尾鰭飄逸，被稱為「水中女王」。"],
+      ["寶石海星", 1, "水・超能力", "紫色雙層星星造型，中心有一顆閃閃發光的紅寶石核心，是小霞的愛用寶可夢。"],
+      ["大鉗蟹", 1, "水", "紅色的螃蟹，有一對大鉗子，會在沙灘上橫著走。"],
+      ["超音蝠", 1, "毒・飛行", "沒有眼睛的藍色蝙蝠，靠發出超音波來辨別方向，常出現在洞窟裡。"],
+
+      // ===== 第 2 世代 =====
+      ["皮丘", 2, "電", "皮卡丘的幼年型態，還不太會控制電力，常常一放電就電到自己。"],
+      ["寶寶丁", 2, "一般・妖精", "胖丁的幼年型態，圓圓的粉紅色身體，彈性非常好，會像球一樣彈跳。"],
+      ["波克比", 2, "妖精", "身體下半部還裝在蛋殼裡的小寶寶，據說會把幸福分給善良的人。"],
+      ["咩利羊", 2, "電", "毛茸茸的綿羊，羊毛互相摩擦就會產生靜電。"],
+      ["電龍", 2, "電", "尾巴末端有一顆會發光的紅色球，光芒能照得很遠，以前被當成燈塔使用。"],
+      ["瑪力露", 2, "水・妖精", "藍色圓球般的老鼠，尾巴末端有一顆像水球的球，浮在水上不會沉。"],
+      ["樹才怪", 2, "岩石", "外型像一棵樹並喜歡假裝成樹木，但其實是岩石屬性，最怕水。"],
+      ["太陽伊布", 2, "超能力", "伊布在白天親密度很高時進化而成，額頭上有一顆紅寶石，能預知對手動作。"],
+      ["月亮伊布", 2, "惡", "伊布在夜晚親密度很高時進化而成，黑色身體上有黃色圓環花紋，會在月光下發光。"],
+      ["烏波", 2, "水・地面", "淺藍色的小蠑螈，頭的兩側有像鰓一樣的突起，表情總是傻傻的。"],
+      ["沼王", 2, "水・地面", "藍色滑溜溜的兩棲寶可夢，臉上永遠掛著天真微笑，撞到船底也不在乎。"],
+      ["呆呆王", 2, "水・超能力", "頭被大舌貝咬住，看起來像戴著一頂王冠，因此變得非常聰明。"],
+      ["夢妖", 2, "幽靈", "喜歡在晚上發出哭聲嚇人的幽靈，會吸取別人害怕的情緒當作能量。"],
+      ["果然翁", 2, "超能力", "藍色身體、總是敬禮大喊自己的名字，從不主動攻擊，專門反彈對手的招式。"],
+      ["未知圖騰", 2, "超能力", "外型像古代文字一樣的神秘寶可夢，總共有 28 種不同的形狀。"],
+      ["麒麟奇", 2, "一般・超能力", "像長頸鹿的寶可夢，尾巴上也有一個有自己大腦的頭，連睡覺都會警戒。"],
+      ["布魯", 2, "妖精", "粉紅色的鬥牛犬，長相看起來很兇，其實個性膽小又愛撒嬌。"],
+      ["巨鉗螳螂", 2, "蟲・鋼", "全身紅色鋼鐵外殼，鉗子上有眼睛般的花紋，用來嚇唬敵人。"],
+      ["赫拉克羅斯", 2, "蟲・格鬥", "深藍色甲蟲，頭上有一支巨大的角，力氣大到能把大樹連根撬起。"],
+      ["狃拉", 2, "惡・冰", "黑色身體、紅色羽毛裝飾的狡猾寶可夢，會趁鳥寶可夢不在時偷蛋。"],
+      ["熊寶寶", 2, "一般", "額頭上有新月花紋的小熊，最喜歡舔自己沾滿蜂蜜的手掌。"],
+      ["小山豬", 2, "冰・地面", "全身覆蓋著棕色長毛的小豬，毛把眼睛都遮住了，會用鼻子挖土找食物。"],
+      ["信使鳥", 2, "冰・飛行", "紅白配色像聖誕老人的小鳥，會把食物裝在尾巴裡送給別人。"],
+      ["盔甲鳥", 2, "鋼・飛行", "全身都是堅硬的鋼鐵羽毛，翅膀邊緣鋒利得像刀子一樣。"],
+      ["黑魯加", 2, "惡・火", "頭上有彎曲大角的黑色地獄犬，口中會噴出帶有毒素的火焰。"],
+      ["刺龍王", 2, "水・龍", "住在深海裡的海馬模樣寶可夢，打個哈欠就能引起海上漩渦。"],
+      ["頓甲", 2, "地面", "灰色的大象模樣寶可夢，可以把身體捲成像輪胎一樣高速滾動撞擊。"],
+      ["圖圖犬", 2, "一般", "尾巴末端像畫筆一樣會分泌顏料，喜歡到處塗鴉，能用寫生學會幾乎所有招式。"],
+      ["大奶罐", 2, "一般", "粉紅色的乳牛寶可夢，每天能產出 20 公升營養豐富的牛奶。"],
+      ["幸福蛋", 2, "一般", "由吉利蛋進化，全身毛茸茸的，能感受別人的悲傷並把幸福的蛋分給對方。"],
+      ["雷公", 2, "電", "城都三聖獸之一，擁有像雷雲一樣的鬃毛，吼叫聲像打雷一樣響亮。"],
+      ["炎帝", 2, "火", "城都三聖獸之一，傳說是從火山噴發中誕生，吼叫時會引發火山爆發。"],
+      ["水君", 2, "水", "城都三聖獸之一，藍色的身體與飄逸的紫色鬃毛，能夠淨化污濁的水。"],
+      ["班基拉斯", 2, "岩石・惡", "像綠色哥吉拉的巨大怪獸，一發怒就能震垮整座山，連地圖都要重畫。"],
+      ["洛奇亞", 2, "超能力・飛行", "銀白色的巨大傳說寶可夢，被稱為「海之神」，揮動翅膀就能吹倒房屋。"],
+      ["鳳王", 2, "火・飛行", "擁有彩虹般七彩羽毛的傳說鳥寶可夢，據說看到牠的人會得到永遠的幸福。"],
+      ["時拉比", 2, "超能力・草", "綠色的小妖精，能夠穿越時間，被稱為森林的守護神。"],
+
+      // ===== 第 3 世代 =====
+      ["拉魯拉絲", 3, "超能力・妖精", "綠色瀏海遮住眼睛的小寶可夢，頭上的紅色角能感受到別人的情緒。"],
+      ["沙奈朵", 3, "超能力・妖精", "像穿著白色長裙的優雅淑女，為了保護訓練家甚至能製造出小型黑洞。"],
+      ["斗笠菇", 3, "草・格鬥", "頭上像戴著綠色斗笠的袋鼠模樣寶可夢，手臂能瞬間伸長打出音速拳。"],
+      ["懶人獺", 3, "一般", "像樹懶一樣的寶可夢，一天要睡 20 個小時，幾乎整天都趴著不動。"],
+      ["請假王", 3, "一般", "力氣不輸傳說寶可夢的大猩猩，卻懶到每動一次就要休息一回合。"],
+      ["勾魂眼", 3, "惡・幽靈", "住在洞窟裡的小鬼，眼睛是兩顆閃閃發亮的寶石，以吃寶石維生。"],
+      ["大嘴娃", 3, "鋼・妖精", "外表是可愛的小女孩模樣，但後腦勺長著一張巨大的鋼鐵大嘴。"],
+      ["可可多拉", 3, "鋼・岩石", "全身包覆著鐵甲的小怪獸，以吃鐵礦維生，有時還會啃掉鐵軌。"],
+      ["波士可多拉", 3, "鋼・岩石", "全身鋼鐵盔甲的巨大怪獸，會把整座山當作自己的地盤保護。"],
+      ["落雷獸", 3, "電", "藍黃色的狗狗，鬃毛會不斷放電，常在打雷的地方出現。"],
+      ["正電拍拍", 3, "電", "紅色耳朵、臉頰有「＋」號的兔子，會用拍拍手的方式替同伴加油。"],
+      ["負電拍拍", 3, "電", "藍色耳朵、臉頰有「－」號的兔子，和搭檔一起為同伴加油打氣。"],
+      ["吞食獸", 3, "毒", "綠色的大胃袋寶可夢，大嘴巴什麼都吞得下去，甚至能整個吞下輪胎。"],
+      ["吼鯨王", 3, "水", "身長 14.5 公尺的巨大藍鯨，是最大的寶可夢之一，喜歡在海面上噴水。"],
+      ["煤炭龜", 3, "火", "背上的龜殼會不斷冒出黑煙，靠燃燒煤炭來產生能量。"],
+      ["七夕青鳥", 3, "龍・飛行", "藍色身體、翅膀像蓬鬆白雲一樣的鳥，會用優美的歌聲唱歌。"],
+      ["飄浮泡泡", 3, "一般", "會隨著天氣改變外型的寶可夢，晴天、下雨和下雪時樣子都不一樣。"],
+      ["醜醜魚", 3, "水", "長相醜陋、破破爛爛的魚，但牠卻能進化成世界上最美麗的寶可夢。"],
+      ["美納斯", 3, "水", "被稱為世界上最美麗的寶可夢，長得像美人魚般的海蛇，能平息爭吵。"],
+      ["變隱龍", 3, "一般", "像變色龍一樣能改變身體顏色隱身，但肚子上的紅色條紋怎麼都變不掉。"],
+      ["詛咒娃娃", 3, "幽靈", "被主人丟掉的布偶怨念化成的幽靈，嘴巴上有一條拉鍊。"],
+      ["阿勃梭魯", 3, "惡", "白色毛髮、頭上有鐮刀狀彎角，災難發生前會出現警告人類，卻常被誤會。"],
+      ["風鈴鈴", 3, "超能力", "外型像一顆風鈴，會用頭頂的吸盤掛在樹枝上，叫聲像清脆的鈴聲。"],
+      ["海豹球", 3, "冰・水", "圓滾滾的海豹寶可夢，比起走路更喜歡在冰上滾來滾去移動。"],
+      ["寶貝龍", 3, "龍", "頭上戴著像石頭一樣堅硬的頭盔，一直夢想能在天空飛翔。"],
+      ["暴飛龍", 3, "龍・飛行", "實現了飛翔夢想的藍色巨龍，展開紅色翅膀時會開心地噴出火焰。"],
+      ["巨金怪", 3, "鋼・超能力", "四隻腳的鋼鐵寶可夢，臉上有 X 字型標誌，擁有四個大腦，比超級電腦還聰明。"],
+      ["拉帝亞斯", 3, "龍・超能力", "紅白配色的傳說寶可夢，個性溫柔，能夠讓光線折射讓自己隱形。"],
+      ["拉帝歐斯", 3, "龍・超能力", "藍白配色的傳說寶可夢，能把自己看到的景象傳送到別人的腦中。"],
+      ["蓋歐卡", 3, "水", "能夠帶來大雨、擴張海洋的超古代傳說寶可夢，身上有紅色紋路。"],
+      ["固拉多", 3, "地面", "能夠讓大地擴張、帶來強烈日照的超古代傳說寶可夢。"],
+      ["烈空坐", 3, "龍・飛行", "住在高空臭氧層中的綠色長龍，會在蓋歐卡和固拉多打架時降臨阻止。"],
+      ["基拉祈", 3, "鋼・超能力", "頭上掛著寫願望的紙條，每一千年只醒來七天，據說能實現人們的願望。"],
+      ["代歐奇希斯", 3, "超能力", "由隕石上的外星病毒突變而成的寶可夢，可以改變成攻擊、防禦、速度等型態。"],
+
+      // ===== 第 4 世代 =====
+      ["小貓怪", 4, "電", "藍黑色的小獅子，全身的毛會放電，遇到危險時會發出強光。"],
+      ["倫琴貓", 4, "電", "擁有能透視牆壁的雙眼，可以看穿藏在任何地方的獵物。"],
+      ["帕奇利茲", 4, "電", "白色的小松鼠，會把電力儲存在臉頰，還會做出放電的毛球送給朋友。"],
+      ["圓陸鯊", 4, "龍・地面", "像小鯊魚一樣的龍寶可夢，嘴巴很大，常會咬住訓練家的頭。"],
+      ["烈咬陸鯊", 4, "龍・地面", "外型像雙足恐龍加上鯊魚，收起翅膀時能像噴射機一樣以音速飛行。"],
+      ["利歐路", 4, "格鬥", "藍黑色的小狗模樣，能感受到別人的情緒和「波導」，非常信任夥伴。"],
+      ["路卡利歐", 4, "格鬥・鋼", "能夠感知並操控名為「波導」的力量，招牌招式是波導彈。"],
+      ["河馬獸", 4, "地面", "身體會不斷冒出沙子的小河馬，住在沙漠裡。"],
+      ["不良蛙", 4, "毒・格鬥", "喉嚨有毒囊，會發出咕嚕聲，在動畫中常用毒突把小剛拖走。"],
+      ["艾路雷朵", 4, "超能力・格鬥", "雄性奇魯莉安用覺醒之石進化而成，手肘能伸出像劍一樣的刀刃。"],
+      ["洛托姆", 4, "電・幽靈", "由電漿構成的小精靈，喜歡鑽進洗衣機、冰箱、電風扇等家電裡惡作劇。"],
+      ["瑪狃拉", 4, "惡・冰", "狃拉進化而成，會用爪子在樹上刻下暗號和同伴溝通。"],
+      ["自爆磁怪", 4, "電・鋼", "外型像一架 UFO 的鋼鐵寶可夢，能發出強力電磁波。"],
+      ["電擊魔獸", 4, "電", "兩條尾巴能像電線一樣插進對手身上放出上萬伏特電流。"],
+      ["象牙豬", 4, "冰・地面", "擁有巨大冰象牙的長毛象，從冰河時期就生存到現在。"],
+      ["雪妖女", 4, "冰・幽靈", "像穿著和服的雪女，會把迷路的登山客冰凍起來帶回家收藏。"],
+      ["葉伊布", 4, "草", "伊布進化而成，耳朵和尾巴像葉子，能像植物一樣進行光合作用。"],
+      ["冰伊布", 4, "冰", "伊布進化而成，能讓體溫下降冰凍周圍的空氣，製造出鑽石塵。"],
+      ["姆克鷹", 4, "一般・飛行", "頭上有紅色冠毛的兇猛老鷹，就算對手比自己強大也絕不退縮。"],
+      ["帝牙盧卡", 4, "鋼・龍", "掌管「時間」的傳說寶可夢，胸口有一顆鑽石，牠的心跳讓時間流動。"],
+      ["帕路奇亞", 4, "水・龍", "掌管「空間」的傳說寶可夢，肩膀上有珍珠，能扭曲空間。"],
+      ["騎拉帝納", 4, "幽靈・龍", "住在「反轉世界」的傳說寶可夢，因為太過暴躁而被驅逐。"],
+      ["阿爾宙斯", 4, "一般", "傳說中創造了宇宙與世界的創世神，有著一千隻手。"],
+      ["達克萊伊", 4, "惡", "會讓人陷入惡夢的黑色幻之寶可夢，常出現在新月的夜晚。"],
+      ["謝米", 4, "草", "像小刺蝟的幻之寶可夢，背上開著花，能把被污染的土地變回花田。"],
+
+      // ===== 第 5 世代 =====
+      ["比克提尼", 5, "超能力・火", "耳朵是 V 字型的幻之寶可夢，被稱為「勝利寶可夢」，能帶來勝利。"],
+      ["索羅亞", 5, "惡", "灰黑色的小狐狸，會用幻覺把自己變成人類或其他寶可夢惡作劇。"],
+      ["索羅亞克", 5, "惡", "留著紅色長馬尾的黑狐狸，能製造出大規模的幻覺保護自己的同伴。"],
+      ["泡沫栗鼠", 5, "一般", "灰色的小栗鼠，最愛乾淨，會用蓬鬆的尾巴到處打掃灰塵。"],
+      ["多多冰", 5, "冰", "外型像一支冰淇淋甜筒，據說是由冰柱接收朝陽的能量誕生的。"],
+      ["雙倍多多冰", 5, "冰", "擁有兩顆頭的冰淇淋寶可夢，一生氣就會颳起暴風雪。"],
+      ["電飛鼠", 5, "電・飛行", "像飛鼠一樣張開皮膜滑翔，會把頰囊中的電力放出來。"],
+      ["燭光靈", 5, "幽靈・火", "像一根小蠟燭，頭上的火焰會偷偷吸取人類和寶可夢的生命能量。"],
+      ["水晶燈火靈", 5, "幽靈・火", "像一座懸浮在空中的黑色吊燈，燃燒著紫色火焰，會吸取靈魂。"],
+      ["雙斧戰龍", 5, "龍", "嘴巴兩側長著像斧頭一樣的獠牙，鋒利到能砍斷鋼鐵。"],
+      ["三首惡龍", 5, "惡・龍", "擁有三顆頭的黑色凶暴巨龍，兩隻手也是頭，會攻擊所有移動的東西。"],
+      ["火神蛾", 5, "蟲・火", "有六片火焰翅膀的蛾，傳說在火山灰遮住太陽時，牠的火焰代替了太陽。"],
+      ["功夫鼬", 5, "格鬥", "像功夫高手的鼬鼠，手臂上的長毛像鞭子一樣，能快速連續攻擊。"],
+      ["龍頭地鼠", 5, "地面・鋼", "頭上和手上有鋼鐵爪子，能像鑽頭一樣旋轉鑽進地底。"],
+      ["哭哭面具", 5, "幽靈", "拿著一個像自己生前臉孔的面具，有時看著面具會想起過去而哭泣。"],
+      ["蓋諾賽克特", 5, "蟲・鋼", "三億年前的古代蟲寶可夢被改造而成，背上裝有大砲。"],
+      ["雷希拉姆", 5, "龍・火", "白色的傳說寶可夢，代表「真實」，尾巴能噴出燃燒世界的火焰。"],
+      ["捷克羅姆", 5, "龍・電", "黑色的傳說寶可夢，代表「理想」，尾巴是發電機能產生雷電。"],
+      ["酋雷姆", 5, "龍・冰", "灰色的傳說寶可夢，能放出冰凍一切的寒氣，據說會吃人和寶可夢。"],
+
+      // ===== 第 6 世代 =====
+      ["仙子伊布", 6, "妖精", "伊布進化而成，粉紅色和白色身體，有像緞帶一樣的觸角能安撫敵人。"],
+      ["妖火紅獅", 6, "火・一般", "雄性有像火焰般的大鬃毛，鬃毛越大的越受到同伴尊敬。"],
+      ["花蓓蓓", 6, "妖精", "騎在一朵花上的小妖精，一生都會和這朵花在一起。"],
+      ["霸道熊貓", 6, "格鬥・惡", "嘴裡叼著一片竹葉的熊貓，看起來像不良少年，但很重視夥伴。"],
+      ["超能妙喵", 6, "超能力", "白藍色的貓，耳朵下面藏著能發出超能力的眼睛花紋。"],
+      ["堅盾劍怪", 6, "鋼・幽靈", "外型像一把劍和一面盾牌，能在攻擊和防禦型態之間切換。"],
+      ["咚咚鼠", 6, "電・妖精", "像小倉鼠的寶可夢，用鬍鬚當作天線接收電波，常從插座偷電。"],
+      ["黏美龍", 6, "龍", "全身黏滑的紫色龍，很愛撒嬌，喜歡抱住訓練家讓對方全身黏答答。"],
+      ["鑰圈兒", 6, "鋼・妖精", "最喜歡收集鑰匙的寶可夢，會把鑰匙掛在身上的圓環上。"],
+      ["鋼砲臂蝦", 6, "水", "擁有超大鉗子的蝦子，能從鉗子噴出像砲彈一樣的水流。"],
+      ["怪顎龍", 6, "岩石・龍", "從化石復活的暴龍，擁有能咬碎汽車的巨大下顎。"],
+      ["蒂安希", 6, "岩石・妖精", "粉紅色的幻之寶可夢，能夠在雙手之間製造出閃閃發亮的鑽石。"],
+      ["哲爾尼亞斯", 6, "妖精", "像一頭有七彩鹿角的鹿，代表「生命」的傳說寶可夢。"],
+      ["伊裴爾塔爾", 6, "惡・飛行", "像紅黑色大鳥的傳說寶可夢，代表「毀滅」，會吸取生命。"],
+      ["基格爾德", 6, "龍・地面", "守護生態系平衡的傳說寶可夢，由許多細胞組成，可以變換不同型態。"],
+
+      // ===== 第 7 世代 =====
+      ["岩狗狗", 7, "岩石", "脖子周圍有岩石的小狗，喜歡用頸部的岩石去磨蹭親近的人。"],
+      ["鬃岩狼人", 7, "岩石", "會依照進化時是白天或夜晚，變成不同模樣的岩石狼。"],
+      ["弱丁魚", 7, "水", "單獨一隻時非常弱小，但遇到危險會聚集成巨大魚群嚇退敵人。"],
+      ["夜盜火蜥", 7, "毒・火", "只有雌性的火毒蜥蜴，會釋放香味吸引雄性。"],
+      ["穿著熊", 7, "一般・格鬥", "外表像絨毛玩偶的粉紅黑色大熊，擁抱力氣大到能把人骨頭折斷。"],
+      ["謎擬Ｑ", 7, "幽靈・妖精", "披著畫有皮卡丘臉孔的破布，因為想跟人類做朋友才打扮成皮卡丘。"],
+      ["沙丘娃", 7, "幽靈・地面", "外型像一座沙堡，頭上插著一把小鏟子，會吸取碰到它的人的生命力。"],
+      ["卡璞・鳴鳴", 7, "電・妖精", "阿羅拉地區的守護神，外殼像頭盔，好奇心旺盛又容易生氣。"],
+      ["索爾迦雷歐", 7, "超能力・鋼", "像獅子的傳說寶可夢，被稱為「吞食太陽的野獸」。"],
+      ["露奈雅拉", 7, "超能力・幽靈", "像巨大蝙蝠的傳說寶可夢，被稱為「誘月之獸」。"],
+      ["瑪夏多", 7, "格鬥・幽靈", "躲在別人影子裡的幻之寶可夢，能模仿影子主人的動作。"],
+      ["捷拉奧拉", 7, "電", "像老虎的幻之寶可夢，以雷電般的速度移動，用利爪放電攻擊。"],
+      ["美錄坦", 7, "鋼", "身體由液態金屬構成、頭部像螺帽的幻之寶可夢，能吸收金屬。"],
+
+      // ===== 第 8 世代 =====
+      ["鋼鎧鴉", 8, "飛行・鋼", "全身鋼鐵羽毛的大烏鴉，在伽勒爾地區會載著人們在空中當計程車。"],
+      ["古月鳥", 8, "飛行・水", "呆呆的藍色鵜鶘，潛水抓魚時偶爾會把皮卡丘誤吞進嘴裡。"],
+      ["來電汪", 8, "電", "像柯基犬的寶可夢，奔跑時尾巴會發電，個性活潑好動。"],
+      ["蘋裹龍", 8, "草・龍", "住在蘋果裡的小龍寶可夢，只露出頭，以蘋果為家也當作食物。"],
+      ["雪吞蟲", 8, "冰・蟲", "白色的小毛蟲，靠吃樹枝上的積雪維生，會吐出冰冷的絲。"],
+      ["霜奶仙", 8, "妖精", "外型像一塊裝飾華麗的奶油蛋糕，身上的奶油非常美味。"],
+      ["布莉姆溫", 8, "超能力・妖精", "頭上長著像長髮一樣的觸手，能感受情緒，會攻擊情緒太激動的人。"],
+      ["多龍巴魯托", 8, "龍・幽靈", "頭上的角裡住著小隻的多龍梅西亞，能把牠們像飛彈一樣射出。"],
+      ["冰砌鵝", 8, "冰", "頭被一塊大冰塊包住的企鵝，冰塊融化後會露出呆萌的臉。"],
+      ["武道熊師", 8, "格鬥・惡", "修練武術的熊寶可夢，依照修練的塔不同，會變成一擊流或連擊流。"],
+      ["蒼響", 8, "妖精", "伽勒爾的英雄傳說寶可夢，嘴裡叼著一把劍的藍色狼。"],
+      ["藏瑪然特", 8, "格鬥", "伽勒爾的英雄傳說寶可夢，身上穿著盾牌盔甲的紅色狼。"],
+      ["無極汰那", 8, "毒・龍", "從宇宙墜落的巨大傳說寶可夢，能夠極巨化變得非常巨大。"],
+
+      // ===== 第 9 世代 =====
+      ["布撥", 9, "電", "像小老鼠的寶可夢，用手掌上的肉球摩擦產生電力。"],
+      ["海地鼠", 9, "水", "長得很像地鼠，但其實是從沙灘探出頭的海中寶可夢，身體細長。"],
+      ["米立龍", 9, "龍・水", "長得像一貫壽司的小龍寶可夢，會跟吃吼霸合作戰鬥。"],
+      ["吃吼霸", 9, "水", "超過 12 公尺的大鯰魚，頭腦不太靈光，會讓米立龍坐在嘴裡指揮牠。"],
+      ["巨鍛匠", 9, "妖精・鋼", "粉紅色嬌小的身體，卻能揮舞超巨大的鐵鎚，會打落鋼鎧鴉收集金屬。"],
+      ["棄世猴", 9, "格鬥・幽靈", "火爆猴憤怒到極點突破肉體而進化成的寶可夢，憤怒能量更強大。"],
+      ["索財靈", 9, "幽靈", "住在寶箱裡的幽靈，會收集古老的金幣，只露出一隻小手。"],
+      ["賽富豪", 9, "鋼・幽靈", "身體由一千枚金幣構成，像衝浪一樣乘著金幣移動。"],
+      ["鹽石巨靈", 9, "岩石", "身體由鹽巴構成的巨大寶可夢，會把鹽撒在傷口上替寶可夢治療。"],
+      ["故勒頓", 9, "格鬥・龍", "《寶可夢 朱》的封面傳說寶可夢，紅色的古代型，可以騎乘移動。"],
+      ["密勒頓", 9, "電・龍", "《寶可夢 紫》的封面傳說寶可夢，紫色的未來型，可以騎乘移動。"]
+    ];
+
+let activeQuestions = [], currentIndex = 0, score = 0, answeredMap = {}, speechRate = 1;
+const optionLabels = ["A","B","C","D"];
+
+function shuffle(arr){const a=[...arr];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+
+function buildQuestion(p){
+  const [name,gen,type,desc]=p;
+  const sameGen=shuffle(POKEMON.filter(o=>o[0]!==name&&o[1]===gen)).map(o=>o[0]);
+  const others=shuffle(POKEMON.filter(o=>o[0]!==name&&o[1]!==gen)).map(o=>o[0]);
+  const distractors=[...sameGen.slice(0,2),...others].filter((v,i,a)=>a.indexOf(v)===i).slice(0,3);
+  const options=shuffle([name,...distractors]);
+  const answer=options.indexOf(name);
+  return {
+    name,
+    category: `第${gen}世代・${REGION[gen]}｜${type}屬性`,
+    q: `${desc}請問這是哪一隻寶可夢？`,
+    options, answer,
+    explanation: `正確答案是 (${optionLabels[answer]}) ${name}！牠是第${gen}世代（${REGION[gen]}地區）的${type}屬性寶可夢。`
+  };
+}
+
+function generateRandomQuiz(){
+  stopSpeaking();
+  const gen=parseInt(document.getElementById("gen-select").value,10);
+  const count=parseInt(document.getElementById("count-select").value,10);
+  const pool=POKEMON.filter(p=>gen===0||p[1]===gen);
+  activeQuestions=shuffle(pool).slice(0,Math.min(count,pool.length)).map(buildQuestion);
+  currentIndex=0;score=0;answeredMap={};
+  document.getElementById("subtitle").textContent=`題庫 ${POKEMON.length} 隻熱門寶可夢，本次抽出 ${activeQuestions.length} 題`;
+  renderQuestion(false);
+  updateCopyTextarea();
+  window.scrollTo(0,0);
+}
+
+function switchTab(tab){
+  stopSpeaking();
+  document.getElementById("view-quiz").classList.toggle("hidden",tab!=="quiz");
+  document.getElementById("view-copy").classList.toggle("hidden",tab!=="copy");
+  document.getElementById("nav").classList.toggle("hidden",tab!=="quiz");
+  document.getElementById("tab-quiz").className="tab"+(tab==="quiz"?" on":"");
+  document.getElementById("tab-copy").className="tab"+(tab==="copy"?" on":"");
+  if(tab==="copy")updateCopyTextarea();
+}
+
+function setRate(r){
+  speechRate=r;
+  [0.85,1,1.2].forEach(x=>{document.getElementById(`rate-${x}`).className=(x===r?"on":"")});
+}
+
+function renderQuestion(autoSpeak){
+  if(!activeQuestions.length)return;
+  const item=activeQuestions[currentIndex],total=activeQuestions.length;
+  document.getElementById("q-badge").textContent=`第 ${currentIndex+1} / ${total} 題`;
+  document.getElementById("q-category").textContent=item.category;
+  document.getElementById("score-display").textContent=`${score} / ${total}`;
+  document.getElementById("progress-bar").style.width=`${((currentIndex+1)/total)*100}%`;
+  document.getElementById("question-text").textContent=item.q;
+  const box=document.getElementById("options-container");
+  box.innerHTML="";
+  const sel=answeredMap[currentIndex],answered=sel!==undefined;
+  item.options.forEach((opt,idx)=>{
+    const b=document.createElement("button");
+    b.disabled=answered;
+    let cls="opt",mark="";
+    if(answered){
+      if(idx===item.answer){cls+=" ok";mark="✅"}
+      else if(idx===sel){cls+=" bad";mark="❌"}
+      else cls+=" dim";
+    }
+    b.className=cls;
+    b.innerHTML=`<span>(${optionLabels[idx]}) ${opt}</span><span>${mark}</span>`;
+    b.onclick=()=>selectAnswer(idx);
+    box.appendChild(b);
+  });
+  const eb=document.getElementById("explanation-box");
+  eb.classList.toggle("hidden",!answered);
+  if(answered){
+    const ok=sel===item.answer;
+    document.getElementById("feedback-title").textContent=ok?"🎉 答對了！":"💡 差一點點！";
+    document.getElementById("explanation-text").textContent=item.explanation;
+  }
+  document.getElementById("prev-btn").disabled=currentIndex===0;
+  document.getElementById("next-btn").textContent=currentIndex===total-1?"完成 🏆":"下一題 ➡️";
+  if(autoSpeak&&document.getElementById("auto-speak-toggle").checked)speakCurrentQuestion();
+}
+
+function selectAnswer(idx){
+  if(answeredMap[currentIndex]!==undefined)return;
+  answeredMap[currentIndex]=idx;
+  const item=activeQuestions[currentIndex],ok=idx===item.answer;
+  if(ok)score++;
+  renderQuestion(false);
+  if(document.getElementById("auto-speak-toggle").checked)speakExplanation();
+}
+function prevQuestion(){if(currentIndex>0){stopSpeaking();currentIndex--;renderQuestion(true);window.scrollTo(0,0)}}
+function nextQuestion(){
+  if(currentIndex<activeQuestions.length-1){stopSpeaking();currentIndex++;renderQuestion(true);window.scrollTo(0,0)}
+  else speakText(`恭喜完成挑戰！您在 ${activeQuestions.length} 題中答對了 ${score} 題！`);
+}
+
+/* ===== 語音播放系統（微軟曉臻真人 MP3 優先 ＋ 原生語音備援） ===== */
+let currentAudio = null;
+let speechTimer = null;
+let playbackSession = 0;
+let cachedVoice = null;
+
+function pickVoice(){
+  if(!("speechSynthesis" in window))return null;
+  const vs=speechSynthesis.getVoices();
+  if(!vs.length)return cachedVoice;
+  cachedVoice=vs.find(v=>/zh[-_]TW/i.test(v.lang))||vs.find(v=>/zh[-_]HK/i.test(v.lang))||vs.find(v=>/^zh/i.test(v.lang))||cachedVoice;
+  return cachedVoice;
+}
+
+function stopSpeaking(){
+  playbackSession++;
+  clearTimeout(speechTimer);
+  speechTimer = null;
+  if(currentAudio){
+    currentAudio.onplay = currentAudio.onended = currentAudio.onerror = null;
+    currentAudio.pause();
+    currentAudio.currentTime = 0;
+    currentAudio = null;
+  }
+  if("speechSynthesis" in window && (speechSynthesis.speaking || speechSynthesis.pending)) speechSynthesis.cancel();
+  const s = document.getElementById("speech-status");
+  if(s) s.textContent = "";
+}
+
+function playNativeSpeech(text){
+  const s = document.getElementById("speech-status");
+  if(!("speechSynthesis" in window)){
+    if(s) s.textContent = "⚠️ 此瀏覽器不支援語音";
+    return;
+  }
+  speechSynthesis.cancel();
+  clearTimeout(speechTimer);
+  const session = playbackSession;
+  speechTimer = setTimeout(()=>{
+    speechTimer = null;
+    if(session !== playbackSession) return;
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = "zh-TW";
+    u.rate = speechRate;
+    u.volume = 1;
+    const v = pickVoice();
+    if(v) u.voice = v;
+    u.onstart = () => { if(s) s.textContent = "🔊 播放中（原生系統語音）..."; };
+    u.onend = u.onerror = () => { if(s) s.textContent = ""; };
+    speechSynthesis.speak(u);
+  }, 60);
+}
+
+function playAudioOrFallback(audioPath, fallbackText, onComplete){
+  stopSpeaking();
+  const session = playbackSession;
+  const s = document.getElementById('speech-status');
+  if(s) s.textContent = '🔊 載入真人語音中...';
+  const audio = new Audio(audioPath);
+  audio.volume = 1;
+  audio.muted = false;
+  audio.playbackRate = speechRate;
+  currentAudio = audio;
+  let fallbackStarted = false;
+  function fallback(){
+    if(session !== playbackSession || fallbackStarted) return;
+    fallbackStarted = true;
+    audio.onplay = audio.onended = audio.onerror = null;
+    audio.pause();
+    if(currentAudio === audio) currentAudio = null;
+    playNativeSpeech(fallbackText);
+  }
+  audio.onplay = () => {
+    if(session === playbackSession && s) s.textContent = '✨ 播放中（微軟真人曉臻語音）...';
+  };
+  audio.onended = () => {
+    if(session !== playbackSession) return;
+    if(s) s.textContent = '';
+    if(currentAudio === audio) currentAudio = null;
+    if(onComplete) onComplete();
+  };
+  audio.onerror = fallback;
+  const playPromise = audio.play();
+  if(playPromise !== undefined) playPromise.catch(fallback);
+}
+
+function speakText(text){
+  stopSpeaking();
+  playNativeSpeech(text);
+}
+
+function speakCurrentQuestion(){
+  const item = activeQuestions[currentIndex];
+  if(!item) return;
+  const audioPath = 'audio/q_' + encodeURIComponent(item.name) + '.mp3';
+  const optionsText = item.options.map((name,i)=>'選項 ' + optionLabels[i] + '，' + name).join('。') + '。';
+  const fallbackText = '第 ' + (currentIndex + 1) + ' 題。' + item.q + '。' + optionsText;
+  playAudioOrFallback(audioPath, fallbackText, ()=>playNativeSpeech(optionsText));
+}
+
+function speakCurrentOptions(){
+  const item = activeQuestions[currentIndex];
+  if(!item) return;
+  const text = item.options.map((name,i)=>'選項 ' + optionLabels[i] + '，' + name).join('。') + '。';
+  speakText(text);
+}
+
+function speakExplanation(){
+  const item = activeQuestions[currentIndex];
+  if(!item) return;
+  const audioPath = 'audio/ans_' + encodeURIComponent(item.name) + '.mp3';
+  playAudioOrFallback(audioPath, item.explanation);
+}
+
+function formatQuestions(includeAnswers){
+  return activeQuestions.map((item,i)=>{
+    const options = item.options.map((o,j)=>'(' + optionLabels[j] + ') ' + o).join('\n');
+    return (i+1) + '. ' + item.q + '\n' + options + (includeAnswers ? '\n' + item.explanation : '');
+  }).join('\n\n');
+}
+
+function updateCopyTextarea(){
+  document.getElementById('copy-textarea').value = formatQuestions(false);
+}
+
+async function copyAllQuestions(includeAnswers){
+  const area = document.getElementById('copy-textarea');
+  const toast = document.getElementById('copy-toast');
+  area.value = formatQuestions(includeAnswers);
+  let copied = false;
+  try {
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      await navigator.clipboard.writeText(area.value);
+      copied = true;
+    }
+  } catch(e) {}
+  if(!copied){
+    area.focus();
+    area.select();
+    area.setSelectionRange(0, area.value.length);
+    try { copied = document.execCommand('copy'); } catch(e) {}
+  }
+  toast.textContent = copied ? '✅ 已複製！' : '請長按文字區，選取並複製題庫。';
+  toast.classList.remove('hidden');
+  setTimeout(()=>toast.classList.add('hidden'), 2500);
+}
+
+if("speechSynthesis" in window){
+  speechSynthesis.onvoiceschanged = pickVoice;
+  pickVoice();
+}
+
+// 語音由實際播放按鈕或切題操作啟動，避免靜音系統語音干擾 MP3。
+
+generateRandomQuiz();
+</script>
+</body>
+</html>
+
+
