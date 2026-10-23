@@ -548,6 +548,11 @@ function stopSpeaking(){
   if(s) s.textContent = "";
 }
 
+function usesAppleTouchSpeech(){
+  return /iPhone|iPad|iPod/.test(navigator.userAgent) ||
+    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+}
+
 function playNativeSpeech(text){
   const s = document.getElementById("speech-status");
   if(!("speechSynthesis" in window)){
@@ -557,7 +562,7 @@ function playNativeSpeech(text){
   speechSynthesis.cancel();
   clearTimeout(speechTimer);
   const session = playbackSession;
-  speechTimer = setTimeout(()=>{
+  const startSpeech = ()=>{
     speechTimer = null;
     if(session !== playbackSession) return;
     const u = new SpeechSynthesisUtterance(text);
@@ -567,9 +572,15 @@ function playNativeSpeech(text){
     const v = pickVoice();
     if(v) u.voice = v;
     u.onstart = () => { if(s) s.textContent = "🔊 播放中（原生系統語音）..."; };
-    u.onend = u.onerror = () => { if(s) s.textContent = ""; };
+    u.onend = () => { if(session === playbackSession && s) s.textContent = ""; };
+    u.onerror = () => {
+      if(session === playbackSession && s) s.textContent = "語音未能播放，請再點一次朗讀按鈕。";
+    };
     speechSynthesis.speak(u);
-  }, 60);
+  };
+  // Apple touch browsers need speech to start within the button's user gesture.
+  if(usesAppleTouchSpeech()) startSpeech();
+  else speechTimer = setTimeout(startSpeech, 60);
 }
 
 function playAudioOrFallback(audioPath, fallbackText, onComplete){
@@ -616,6 +627,12 @@ function speakCurrentQuestion(){
   const audioPath = 'audio/q_' + encodeURIComponent(item.name) + '.mp3';
   const optionsText = item.options.map((name,i)=>'選項 ' + optionLabels[i] + '，' + name).join('。') + '。';
   const fallbackText = '第 ' + (currentIndex + 1) + ' 題。' + item.q + '。' + optionsText;
+  // Keep question and choices in one utterance on iPhone/iPad. Starting speech
+  // from an MP3 ended callback can lose Safari's user-activation permission.
+  if(usesAppleTouchSpeech()){
+    speakText(fallbackText);
+    return;
+  }
   playAudioOrFallback(audioPath, fallbackText, ()=>playNativeSpeech(optionsText));
 }
 
